@@ -31,18 +31,7 @@ module MCollective
             1
           end
         else
-          # On Unices double fork and exec to run puppet in a disowned child
-          child = fork {
-            grandchild = fork {
-              exec command
-            }
-            if grandchild != nil
-              ::Process.detach(grandchild)
-            end
-          }
-          return 1 if child.nil?
-          ::Process.detach(child)
-          return 0
+          return exec command
         end
       end
 
@@ -206,7 +195,7 @@ module MCollective
         args[:signal_daemon] = false if MCollective::Util.windows?
 
         # we can only pass splay arguments if the daemon isn't in signal mode :(
-        signal_daemon = Util.str_to_bool(@config.pluginconf.fetch("puppet.signal_daemon","true")) 
+        signal_daemon = Util.str_to_bool(@config.pluginconf.fetch("puppet.signal_daemon","true"))
         unless @puppet_agent.status[:daemon_present] && signal_daemon
           if request[:force] == true
             # forcing implies --no-splay
